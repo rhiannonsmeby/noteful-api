@@ -1,20 +1,19 @@
 const path = require('path');
 const express = require('express');
-const xss = require('xss');
-const FolderService = require('./folders-service');
-const folderRouter = express.Router();
+const FoldersService = require('./folders-service');
+const foldersRouter = express.Router();
 const jsonBodyParser = express.json();
 
 const serializeFolder = folder => ({
     id: folder.id,
-    folder_name: xss(folder.folder_name)
+    folder_name: folder.folder_name
 });
 
-folderRouter
+foldersRouter
     .route('/')
     .get((req, res, next) => {
         const knexInstance = req.app.get('db');
-        FolderService.getAllFolders(knexInstance)
+        FoldersService.getAllFolders(knexInstance)
             .then(folders => {
                 res.json(folders.map(serializeFolder));
             })
@@ -31,7 +30,7 @@ folderRouter
             });
         }
 
-        FolderService.insertFolder(knexInstance, newFolder)
+        FoldersService.insertFolder(knexInstance, newFolder)
             .then(folder => {
                 res.status(201)
                     .location(path.posix.join(req.originalUrl, `/${folder.id}`))
@@ -40,12 +39,12 @@ folderRouter
             .catch(next);
     });
 
-folderRouter
-    .route('/:folder_id')
+foldersRouter
+    .route('/:id')
     .all((req, res, next) => {
-        FolderService.getById(
+        FoldersService.getById(
             req.app.get('db'),
-            req.params.folder_id
+            req.params.id
         )
             .then(folder => {
                 if (!folder) {
@@ -61,14 +60,14 @@ folderRouter
     .get((req, res, next) => {
         res.json(serializeFolder(res.folder));
     })
-    .delete((req, res, next) => {
-        const knexInstance = req.app.get('db');
-        FolderService.deleteFolder(knexInstance, req.params.folder_id)
-            .then(numRowsAffected => {
-                res.status(204).end();
-            })
-            .catch(next);
-    })
+    // .delete((req, res, next) => {
+    //     const knexInstance = req.app.get('db');
+    //     FoldersService.deleteFolder(knexInstance, req.params.id)
+    //         .then(numRowsAffected => {
+    //             res.status(204).end();
+    //         })
+    //         .catch(next);
+    // })
     .patch(jsonBodyParser, (req, res, next) => {
         const knexInstance = req.app.get('db');
         const { folder_name } = req.body;
@@ -78,14 +77,14 @@ folderRouter
         if (numberOfValues === 0) {
             return res.status(400).json({
                 error: {
-                    message: 'Request body must contain a valid folder_name'
+                    message: 'Request body must contain a valid folder name'
                 }
             });
         }
 
-        FolderService.updateFolder(
+        FoldersService.updateFolder(
             knexInstance,
-            req.params.folder_id,
+            req.params.id,
             folderToUpdate
         )
             .then(numRowsAffected => {
@@ -94,4 +93,4 @@ folderRouter
             .catch(next);
     });
 
-module.exports = folderRouter;
+module.exports = foldersRouter;

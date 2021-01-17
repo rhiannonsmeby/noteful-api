@@ -12,17 +12,22 @@ const NotesService = {
             })
     },
     getById(knex, id) {
-        return knex.from('notes').select('*').where('id', id).first()
+        return knex
+            .from('notes')
+            .select('*')
+            .where('id', id)
+            .first()
     },
     deleteNote(knex, id) {
         return knex('notes')
+            .from('notes')
             .where({id})
             .delete()
     },
-    updateNote(knex, id, newNoteFields) {
+    updateNote(knex, id, updateNote) {
         return knex('notes')
             .where({id})
-            .update(newNoteFields)
+            .update(updateNote)
     },
 }
 

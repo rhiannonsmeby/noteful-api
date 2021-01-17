@@ -9,8 +9,8 @@ const serializeNote = note => ({
     id: note.id,
     name: note.name,
     content: note.content,
-    date_created: note.date_created,
-    folder: note.folder,
+    modified: note.modified,
+    folder_id: note.folder_id,
 })
 
 notesRouter
@@ -19,20 +19,34 @@ notesRouter
         const knexInstance = req.app.get('db')
         NotesService.getAllNotes(knexInstance)
             .then(notes => {
-                res.join(notes.map(serializeNote))
+                res.json(notes.map(serializeNote))
             })
             .catch(next)
     })
     .post(jsonParser, (req, res, next) => {
-        const {name, content, folder} = req.body
-        const newNote = {name, content, folder}
+        const knexInstance = req.app.get('db')
+        const {name, content, folder_id, modified} = req.body
+        const newNote = {name, content, folder_id}
 
         for (const [key, value] of Object.entries(newNote)) {
             if (value == null) {
                 return res.status(404).json({
                    error: {message: `Missing '${key}' in request body`} 
                 })
-            }
+            }    
+        newNote.folder_id = Number(folder_id);
+
+        if(modified) {
+            newNote.modified = modified
+        }
+            
+        NotesService.insertNote(knexInstance, newNote)
+            .then(note => {
+                res.status(201)
+                    .location(path.posix.join(req.originalUrl, `/${note.id}`))
+                    .json(serializeNote(note))
+            })
+            .catch(next)
         }
     })
 
@@ -55,26 +69,21 @@ notesRouter
                 .catch(next)
         })
         .get((req, res, next) => {
-            res.json({
-                id: res.note.id,
-                name: res.note.name,
-                content: res.note.content,
-                date_created: res.note.date_created,
-            })
+            res.json(serializeNote(res.note))
         })
         .delete((req, res, next) => {
             NotesService.deleteNote(
                 req.app.get('db'),
                 req.params.id
             )
-                .then(() => {
+                .then((numRowsAffected) => {
                     res.status(204).end()
                 })
                 .catch(next)
         })
         .patch(jsonParser, (req, res, next) => {
-            const {name, content} = req.body
-            const noteToUpdate = {name, content}
+            const {name, content, modified} = req.body
+            const noteToUpdate = {name, content, modified}
 
             const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length
             if (numberOfValues === 0) {
