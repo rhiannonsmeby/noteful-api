@@ -42,11 +42,13 @@ foldersRouter
 foldersRouter
     .route('/:id')
     .all((req, res, next) => {
+        console.log('endpoint reached', req.params.id)
         FoldersService.getById(
             req.app.get('db'),
             req.params.id
         )
             .then(folder => {
+                console.log('FOLDER', folder)
                 if (!folder) {
                     return res.status(404).json({
                         error: { message: 'Folder does not exist' }

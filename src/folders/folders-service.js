@@ -12,6 +12,7 @@ const FoldersService = {
             });
     },
     getById(knex, id) {
+        console.log("get by id called", id)
         return knex
             .from('folders')
             .select('*')
