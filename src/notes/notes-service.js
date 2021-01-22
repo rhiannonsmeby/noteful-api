@@ -26,6 +26,7 @@ const NotesService = {
     },
     updateNote(knex, id, updateNote) {
         return knex('notes')
+            .from('notes')
             .where({id})
             .update(updateNote)
     },

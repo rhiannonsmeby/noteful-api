@@ -28,12 +28,11 @@ notesRouter
         const {name, content, folder_id, modified} = req.body
         const newNote = {name, content, folder_id}
 
-        for (const [key, value] of Object.entries(newNote)) {
-            if (value == null) {
-                return res.status(404).json({
-                   error: {message: `Missing '${key}' in request body`} 
-                })
-            }    
+        if (name == null) {
+            return res.status(404).json({
+                error: {message: `Missing '${key}' in request body`} 
+            })
+        }    
         newNote.folder_id = Number(folder_id);
 
         if(modified) {
@@ -47,7 +46,6 @@ notesRouter
                     .json(serializeNote(note))
             })
             .catch(next)
-        }
     })
 
     notesRouter
